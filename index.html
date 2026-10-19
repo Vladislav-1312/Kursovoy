@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления языковой школой</title>
+    <style>
+        :root {
+            --bg-color: #F7F4EE;
+            --card-bg: #FFFFFF;
+            --primary: #966C4E;
+            --primary-hover: #7D573C;
+            --accent: #EAE3D5;
+            --accent-hover: #DDD4C5;
+            --text-color: #2E2522;
+            --text-muted: #594D46;
+            --border-color: #D1C7B7;
+            --danger: #B25A42;
+            --danger-hover: #964732;
+            --table-alt: #FAF7F2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Окно авторизации / Регистрации */
+        .login-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px 30px;
+            width: 360px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .auth-toggle {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .auth-toggle-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            background: #FFFFFF;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+        }
+
+        /* Основной интерфейс приложения */
+        .app-container {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .top-header {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .top-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Навигация вкладок */
+        .tabs-container {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 1px;
+            margin-bottom: -1px;
+            z-index: 2;
+        }
+
+        .tab-btn {
+            background-color: var(--accent);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            padding: 8px 14px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background-color: var(--accent-hover);
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
+        /* Контентная область */
+        .main-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0 8px 8px 8px;
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .search-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-row label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .search-row input {
+            flex-grow: 1;
+            padding: 7px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            background-color: #FFFFFF;
+        }
+
+        .search-row input:focus {
+            border-color: var(--primary);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #F0EADF;
+            color: var(--text-muted);
+            font-weight: 700;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--table-alt);
+        }
+
+        .action-buttons, .business-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .business-buttons {
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: #FFFFFF;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+        }
+
+        .btn-full {
+            flex: 1;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .status-bar {
+            margin-top: 15px;
+            background-color: #F0EADF;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЭКРАН АВТОРИЗАЦИИ / РЕГИСТРАЦИИ -->
+    <div class="login-wrapper" id="loginScreen">
+        <div class="login-card">
+            <div class="auth-toggle">
+                <button class="auth-toggle-btn active" id="loginTabBtn" onclick="switchAuthMode('login')">Вход</button>
+                <button class="auth-toggle-btn" id="registerTabBtn" onclick="switchAuthMode('register')">Регистрация</button>
+            </div>
+
+            <!-- Форма входа -->
+            <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Логин:</label>
+                    <input type="text" id="loginInput" required placeholder="Введите логин">
+                </div>
+                <div class="form-group">
+                    <label>Пароль:</label>
+                    <input type="password" id="passwordInput" required placeholder="Введите пароль">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Войти</button>
+            </form>
+
+            <!-- Форма регистрации -->
+            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>Логин:</label>
+                    <input type="text" id="regLoginInput" required placeholder="Придумайте логин">
+                </div>
+                <div class="form-group">
+                    <label>Пароль:</label>
+                    <input type="password" id="regPasswordInput" required placeholder="Придумайте пароль">
+                </div>
+                <div class="form-group">
+                    <label>Роль в системе:</label>
+                    <select id="regRoleInput">
+                        <option value="user">Пользователь</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ОСНОВНОЙ ИНТЕРФЕЙС ПРИЛОЖЕНИЯ -->
+    <div class="app-container" id="appScreen">
+        <!-- Шапка -->
+        <div class="top-header">
+            <h1>Система управления языковой школой</h1>
+            <div class="user-info">
+                <span id="roleLabel">Роль: Администратор</span>
+                <button class="btn btn-outline" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+
+        <!-- Вкладки -->
+        <div class="tabs-container" id="tabsHeader"></div>
+
+        <!-- Главная карточка -->
+        <div class="main-card">
+            <div class="search-row">
+                <label>🔍 Поиск:</label>
+                <input type="text" id="searchInput" placeholder="Быстрый поиск по записям..." oninput="filterTable()">
+            </div>
+
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Кнопки управления таблицей (Только для Админа) -->
+            <div class="action-buttons admin-only" id="tableActions">
+                <button class="btn btn-primary btn-full" onclick="addRecord()">➕ Добавить запись</button>
+                <button class="btn btn-danger btn-full" onclick="deleteRecord()">🗑 Удалить строку</button>
+            </div>
+        </div>
+
+        <!-- Бизнес-операции (Только для Админа) -->
+        <div class="business-buttons admin-only" id="businessActions">
+            <button class="btn btn-primary btn-full" onclick="processPayment()">💳 Пробить чек студенту</button>
+            <button class="btn btn-primary btn-full" onclick="enrollStudent()">👥 Зачислить в группу</button>
+        </div>
+
+        <!-- Подвал -->
+        <div class="status-bar" id="statusBar">
+            Система активна
+        </div>
+    </div>
+
+    <script>
+        // База пользователей
+        const usersDB = {
+            "admin": { password: "admin", role: "admin", name: "Администратор" },
+            "user": { password: "user", role: "user", name: "Пользователь" }
+        };
+
+        // Данные системы (на русском языке)
+        const schema = {
+            students: {
+                title: "Студенты",
+                headers: ["ID", "ФИО", "Телефон", "Баланс (руб.)"],
+                data: [
+                    [1, "Иванов Алексей Сергеевич", "+7 (999) 123-45-67", 4500],
+                    [2, "Смирнова Елена Васильевна", "+7 (999) 987-65-43", 12000],
+                    [3, "Кузнецов Дмитрий Павлович", "+7 (999) 555-33-22", 0]
+                ]
+            },
+            teachers: {
+                title: "Преподаватели",
+                headers: ["ID", "ФИО", "Телефон", "Опыт (лет)"],
+                data: [
+                    [1, "Петрова Анна Михайловна", "+7 (911) 222-33-44", 7],
+                    [2, "Соколов Игорь Владимирович", "+7 (922) 333-44-55", 5],
+                    [3, "Миллер Ольга Николаевна", "+7 (933) 444-55-66", 10]
+                ]
+            },
+            courses: {
+                title: "Курсы",
+                headers: ["ID", "Название курса", "Язык обучения", "Цена (руб.)"],
+                data: [
+                    [1, "Английский язык (B1 Intermediate)", "Английский", 6500],
+                    [2, "Разговорный китайский для начинающих", "Китайский", 8000],
+                    [3, "Немецкий интенсив (A2)", "Немецкий", 7000]
+                ]
+            },
+            classrooms: {
+                title: "Кабинеты",
+                headers: ["ID", "Номер кабинета", "Вместимость"],
+                data: [
+                    [1, "Кабинет №101 (Лингафонный)", 12],
+                    [2, "Кабинет №102 (Мультимедийный)", 15],
+                    [3, "Кабинет №205 (Стандартный)", 10]
+                ]
+            },
+            study_groups: {
+                title: "Учебные группы",
+                headers: ["ID", "Название группы", "ID курса", "ID преподавателя"],
+                data: [
+                    [1, "Английский B1 (Вт/Чт)", 1, 1],
+                    [2, "Китайский Клуб (Ср/Пт)", 2, 2]
+                ]
+            },
+            enrollments: {
+                title: "Зачисления",
+                headers: ["ID", "ID студента", "ID группы"],
+                data: [
+                    [1, 1, 1],
+                    [2, 2, 2]
+                ]
+            },
+            payments: {
+                title: "Оплаты и чеки",
+                headers: ["ID", "ID студента", "Сумма (руб.)", "Дата и время", "Статус"],
+                data: [
+                    [1, 1, 4500, "2026-06-01 10:30", "Оплачено"],
+                    [2, 2, 12000, "2026-06-02 14:15", "Оплачено"]
+                ]
+            },
+            users: {
+                title: "Пользователи",
+                headers: ["ID", "Логин", "Роль в системе"],
+                data: [
+                    [1, "admin", "Администратор"],
+                    [2, "user", "Пользователь"]
+                ]
+            }
+        };
+
+        let currentUser = null;
+        let currentTab = "students";
+        let selectedRowIndex = null;
+
+        // Переключение между формой Входа и Регистрации
+        function switchAuthMode(mode) {
+            const loginForm = document.getElementById("loginForm");
+            const registerForm = document.getElementById("registerForm");
+            const loginTabBtn = document.getElementById("loginTabBtn");
+            const registerTabBtn = document.getElementById("registerTabBtn");
+
+            if (mode === 'login') {
+                loginForm.classList.add("active");
+                registerForm.classList.remove("active");
+                loginTabBtn.classList.add("active");
+                registerTabBtn.classList.remove("active");
+            } else {
+                loginForm.classList.remove("active");
+                registerForm.classList.add("active");
+                loginTabBtn.classList.remove("active");
+                registerTabBtn.classList.add("active");
+            }
+        }
+
+        // Авторизация
+        function handleLogin(e) {
+            e.preventDefault();
+            const login = document.getElementById("loginInput").value;
+            const pass = document.getElementById("passwordInput").value;
+
+            if (usersDB[login] && usersDB[login].password === pass) {
+                currentUser = usersDB[login];
+                document.getElementById("loginScreen").style.display = "none";
+                document.getElementById("appScreen").style.display = "flex";
+                initApp();
+            } else {
+                alert("Неверный логин или пароль!");
+            }
+        }
+
+        // Регистрация нового пользователя
+        function handleRegister(e) {
+            e.preventDefault();
+            const login = document.getElementById("regLoginInput").value.trim();
+            const pass = document.getElementById("regPasswordInput").value;
+            const role = document.getElementById("regRoleInput").value;
+
+            if (usersDB[login]) {
+                alert("Пользователь с таким логином уже существует!");
+                return;
+            }
+
+            const roleTitle = role === "admin" ? "Администратор" : "Пользователь";
+
+            // Сохраняем пользователя
+            usersDB[login] = { password: pass, role: role, name: login };
+            schema.users.data.push([schema.users.data.length + 1, login, roleTitle]);
+
+            alert("Регистрация прошла успешно! Теперь вы можете войти.");
+            
+            // Очищаем поля и переключаем на вход
+            document.getElementById("regLoginInput").value = "";
+            document.getElementById("regPasswordInput").value = "";
+            switchAuthMode('login');
+            document.getElementById("loginInput").value = login;
+        }
+
+        // Выход из системы
+        function logout() {
+            currentUser = null;
+            document.getElementById("loginInput").value = "";
+            document.getElementById("passwordInput").value = "";
+            document.getElementById("appScreen").style.display = "none";
+            document.getElementById("loginScreen").style.display = "flex";
+        }
+
+        // Инициализация интерфейса
+        function initApp() {
+            renderTabs();
+            renderTable();
+            applyRolePermissions();
+        }
+
+        // Права доступа по роли
+        function applyRolePermissions() {
+            const adminElements = document.querySelectorAll(".admin-only");
+            const roleLabel = document.getElementById("roleLabel");
+            const statusBar = document.getElementById("statusBar");
+
+            if (currentUser.role === "admin") {
+                adminElements.forEach(el => el.style.display = "flex");
+                roleLabel.innerText = `Пользователь: ${currentUser.name} (Администратор)`;
+                statusBar.innerText = "Система активна | Режим: Администратор";
+            } else {
+                adminElements.forEach(el => el.style.display = "none");
+                roleLabel.innerText = `Пользователь: ${currentUser.name} (Пользователь)`;
+                statusBar.innerText = "Система активна | Режим: Пользователь (только просмотр)";
+            }
+        }
+
+        // Рендер вкладок
+        function renderTabs() {
+            const tabsHeader = document.getElementById("tabsHeader");
+            tabsHeader.innerHTML = "";
+
+            Object.keys(schema).forEach(key => {
+                const btn = document.createElement("button");
+                btn.className = `tab-btn ${key === currentTab ? 'active' : ''}`;
+                btn.innerText = schema[key].title;
+                btn.onclick = () => switchTab(key);
+                tabsHeader.appendChild(btn);
+            });
+        }
+
+        // Переключение вкладок
+        function switchTab(key) {
+            currentTab = key;
+            selectedRowIndex = null;
+            document.getElementById("searchInput").value = "";
+            renderTabs();
+            renderTable();
+        }
+
+        // Рендер таблицы
+        function renderTable() {
+            const head = document.getElementById("tableHead");
+            const body = document.getElementById("tableBody");
+            const tabData = schema[currentTab];
+
+            head.innerHTML = `<tr>${tabData.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+
+            body.innerHTML = "";
+            tabData.data.forEach((row, idx) => {
+                const tr = document.createElement("tr");
+                tr.onclick = () => selectRow(tr, idx);
+                tr.innerHTML = row.map(cell => `<td>${cell}</td>`).join('');
+                body.appendChild(tr);
+            });
+        }
+
+        function selectRow(tr, idx) {
+            if (currentUser.role !== "admin") return;
+            const rows = document.querySelectorAll("#tableBody tr");
+            rows.forEach(r => r.style.backgroundColor = "");
+            tr.style.backgroundColor = "#E2D9CC";
+            selectedRowIndex = idx;
+        }
+
+        function filterTable() {
+            const text = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll("#tableBody tr");
+
+            rows.forEach(r => {
+                const match = Array.from(r.children).some(td => td.innerText.toLowerCase().includes(text));
+                r.style.display = match ? "" : "none";
+            });
+        }
+
+        function addRecord() {
+            const tabData = schema[currentTab];
+            const newId = tabData.data.length ? Math.max(...tabData.data.map(d => d[0])) + 1 : 1;
+            const newRow = [newId, ...Array(tabData.headers.length - 1).fill("Новое значение")];
+            tabData.data.push(newRow);
+            renderTable();
+        }
+
+        function deleteRecord() {
+            if (selectedRowIndex === null) {
+                alert("Выберите строку для удаления!");
+                return;
+            }
+            schema[currentTab].data.splice(selectedRowIndex, 1);
+            selectedRowIndex = null;
+            renderTable();
+        }
+
+        function processPayment() {
+            const studentId = prompt("Введите ID студента:");
+            if (!studentId) return;
+            const amount = prompt("Введите сумму оплаты (руб.):");
+            if (!amount) return;
+
+            schema.payments.data.push([
+                schema.payments.data.length + 1,
+                parseInt(studentId),
+                parseFloat(amount),
+                new Date().toISOString().replace('T', ' ').substring(0, 16),
+                "Оплачено"
+            ]);
+
+            const student = schema.students.data.find(s => s[0] == studentId);
+            if (student) student[3] = parseFloat(student[3]) + parseFloat(amount);
+
+            alert("Чек успешно оформлен! Баланс студента пополнен.");
+            if (currentTab === "payments" || currentTab === "students") renderTable();
+        }
+
+        function enrollStudent() {
+            const studentId = prompt("Введите ID студента:");
+            if (!studentId) return;
+            const groupId = prompt("Введите ID группы:");
+            if (!groupId) return;
+
+            schema.enrollments.data.push([
+                schema.enrollments.data.length + 1,
+                parseInt(studentId),
+                parseInt(groupId)
+            ]);
+
+            alert("Студент успешно зачислен в группу!");
+            if (currentTab === "enrollments") renderTable();
+        }
+    </script>
+</body>
+</html>
